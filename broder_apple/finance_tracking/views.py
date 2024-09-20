@@ -1,3 +1,5 @@
+from typing import Any
+from django.db.models.query import QuerySet
 from django.shortcuts import render
 from .models import Transaction, BookEntry, Account
 from django.views import generic
@@ -7,11 +9,8 @@ from django.http import HttpResponse
 
 
 class IndexView(generic.ListView):
+    model = Transaction
     template_name = "finance_tracking/index.html"
-    context_object_name = "latest_transaction_list"
-
-    def get_queryset(self):
-        return Transaction.objects.order_by("-transaction_date")[:5]
 
 
 class BookEntryView(generic.ListView):
