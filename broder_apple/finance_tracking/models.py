@@ -44,7 +44,7 @@ class Account(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    nature = models.CharField(max_length=8, choices=NATURE_CHOICES)
+    nature = models.CharField(max_length=9, choices=NATURE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
