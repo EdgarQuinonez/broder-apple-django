@@ -2,6 +2,9 @@ from django.db import models
 
 
 class Transaction(models.Model):
+    owner = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, related_name="transactions"
+    )
     date = models.DateField()
     description = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)

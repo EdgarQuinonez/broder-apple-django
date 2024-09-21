@@ -1,20 +1,19 @@
 from rest_framework import serializers
 from finance_tracking.models import Transaction
+from django.contrib.auth.models import User
 
 
-class TransactionSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    description = serializers.CharField(max_length=100)
-    created_at = serializers.DateTimeField()
-    updated_at = serializers.DateTimeField()
-    date = serializers.DateField()
+class UserSerializer(serializers.ModelSerializer):
+    snippets = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Snippet.objects.all()
+    )
 
-    def create(self, validated_data):
-        return Transaction.objects.create(**validated_data)
+    class Meta:
+        model = User
+        fields = ["id", "username", "transactions"]
 
-    def update(self, instance, validated_data):
-        instance.description = validated_data.get("description", instance.description)
-        instance.date = validated_data.get("date", instance.date)
-        instance.save()
 
-        return instance
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = "__all__"

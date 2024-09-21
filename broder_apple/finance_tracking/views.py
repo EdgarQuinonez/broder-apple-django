@@ -1,29 +1,26 @@
-from typing import Any
-from django.db.models.query import QuerySet
-from django.shortcuts import render
-from .models import Transaction, BookEntry, Account
 from django.views import generic
-
-# Create your views here.
+from django.http import HttpResponse, JsonResponse
 from django.http import HttpResponse
 
+from rest_framework import status, mixins, generics
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+from rest_framework.parsers import JSONParser
+from rest_framework.response import Response
 
-class IndexView(generic.ListView):
-    model = Transaction
-    template_name = "finance_tracking/index.html"
-
-
-class BookEntryView(generic.ListView):
-    template_name = "finance_tracking/bookentry.html"
-    context_object_name = "latest_bookentry_list"
-
-    def get_queryset(self):
-        return BookEntry.objects.order_by("-entry_date")[:5]
+from .serializers import TransactionSerializer
+from .models import Transaction, BookEntry, Account
 
 
-class AccountView(generic.ListView):
-    template_name = "finance_tracking/account.html"
-    context_object_name = "latest_account_list"
+class TransactionList(
+    generics.ListCreateAPIView,
+):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
 
-    def get_queryset(self):
-        return Account.objects.order_by("account_name")
+
+class TransactionDetail(
+    generics.RetrieveUpdateDestroyAPIView,
+):
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
