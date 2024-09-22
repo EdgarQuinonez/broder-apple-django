@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
 from finance_tracking.permissions import IsOwnerOrReadOnly
 
@@ -20,6 +21,16 @@ from .models import Transaction, BookEntry, Account
 from django.contrib.auth.models import User
 
 from rest_framework.permissions import IsAuthenticated
+
+
+@api_view(["GET"])
+def api_root(request, format=None):
+    return Response(
+        {
+            "users": reverse("user-list", request=request, format=format),
+            "transactions": reverse("transaction-list", request=request, format=format),
+        }
+    )
 
 
 class UserList(generics.ListAPIView):
@@ -80,7 +91,7 @@ class AccountDetail(
 class IncomeTransactionView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, id, format=None):
+    def post(self, request, format=None):
         serializer = TransactionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(owner=request.user, type=Transaction.INCOME)

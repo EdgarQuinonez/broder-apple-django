@@ -5,7 +5,7 @@ urlpatterns = [
     path("finance_tracking/", views.TransactionList.as_view()),
     path("finance_tracking/<int:pk>/", views.TransactionDetail.as_view()),
     path(
-        "finance_tracking/<int:id>/income/",
+        "finance_tracking/income/",
         views.IncomeTransactionView.as_view(),
         name="income-transaction",
     ),

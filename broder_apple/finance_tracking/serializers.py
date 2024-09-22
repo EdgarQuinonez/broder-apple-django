@@ -19,6 +19,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = "__all__"
+        read_only_fields = ["type"]
 
     def create(self, validated_data):
         transaction = Transaction.objects.create(**validated_data)
@@ -26,11 +27,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         amount = validated_data["amount"]
 
         if payment_method == Transaction.CASH:
-            cash_account = Account.objects.get(name="Cash")
-            income_account = Account.objects.get(name="Income")
+            cash_account = Account.objects.get(name="Efectivo")
+            income_account = Account.objects.get(name="Otros Ingresos")
         elif payment_method == Transaction.BANK:
-            bank_account = Account.objects.get(name="Bank")
-            income_account = Account.objects.get(name="Income")
+            bank_account = Account.objects.get(name="Banco")
+            income_account = Account.objects.get(name="Otros Ingresos")
 
         BookEntry.objects.create(
             transaction=transaction,
