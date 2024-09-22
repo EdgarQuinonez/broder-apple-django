@@ -29,6 +29,7 @@ def api_root(request, format=None):
         {
             "users": reverse("user-list", request=request, format=format),
             "transactions": reverse("transaction-list", request=request, format=format),
+            "accounts": reverse("account-list", request=request, format=format),
         }
     )
 
@@ -78,6 +79,10 @@ class BookEntryDetail(
 class AccountList(generics.ListCreateAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 class AccountDetail(
@@ -85,7 +90,7 @@ class AccountDetail(
 ):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
 
 class IncomeTransactionView(APIView):

@@ -3,9 +3,9 @@ from finance_tracking.models import Account, BookEntry, Transaction
 from django.contrib.auth.models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
-    transactions = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Transaction.objects.all()
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    transactions = serializers.HyperlinkedRelatedField(
+        many=True, view_name="transaction-detail", read_only=True
     )
 
     class Meta:
@@ -13,8 +13,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "transactions"]
 
 
-class TransactionSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.HyperlinkedModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
+    id = serializers.ReadOnlyField()
 
     class Meta:
         model = Transaction
@@ -52,15 +53,19 @@ class TransactionSerializer(serializers.ModelSerializer):
         return transaction
 
 
-class BookEntrySerializer(serializers.ModelSerializer):
-    owner = serializers.ReadOnlyField(source="owner.username")
-
+class BookEntrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BookEntry
         fields = "__all__"
 
 
-class AccountSerializer(serializers.ModelSerializer):
+class AccountSerializer(serializers.HyperlinkedModelSerializer):
+    owner = serializers.ReadOnlyField(source="owner.username")
+    id = serializers.ReadOnlyField()
+    # url = serializers.HyperlinkedIdentityField(
+    #     view_name="account-detail", lookup_field="id"
+    # )
+
     class Meta:
         model = Account
         fields = "__all__"

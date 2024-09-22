@@ -57,6 +57,9 @@ class Account(models.Model):
         (EXPENSE, "Expense"),
     ]
 
+    owner = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, related_name="accounts"
+    )
     name = models.CharField(max_length=100)
     nature = models.CharField(max_length=9, choices=NATURE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
