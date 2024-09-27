@@ -12,8 +12,7 @@ class Transaction(models.Model):
 
     owner = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="transactions"
-    )
-    date = models.DateField()
+    )    
     description = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=7, choices=PAYMENT_METHOD_CHOICES)
