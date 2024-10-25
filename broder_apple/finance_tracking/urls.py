@@ -8,7 +8,7 @@ from .views import (
     AccountViewSet,
     CustomObtainAuthToken,
     TokenDetailView,
-    UserRegistrationView,  # Import the registration view
+    UserRegistrationView,
 )
 
 router = DefaultRouter()
@@ -18,13 +18,4 @@ router.register(r"accounts", AccountViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
-    path(
-        "api-token-auth/", CustomObtainAuthToken.as_view(), name="api-token-auth"
-    ),  # Endpoint to obtain a token
-    path(
-        "token/", TokenDetailView.as_view(), name="token-detail"
-    ),  # Endpoint to retrieve token for authenticated user
-    path(
-        "register/", UserRegistrationView.as_view(), name="register"
-    ),  # Registration endpoint
 ]

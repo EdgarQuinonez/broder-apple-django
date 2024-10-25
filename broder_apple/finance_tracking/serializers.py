@@ -14,7 +14,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    # Password should be write-only and require confirmation
     password = serializers.CharField(
         write_only=True, required=True, style={"input_type": "password"}
     )
@@ -52,57 +51,58 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.ReadOnlyField(source="owner.username")
     id = serializers.ReadOnlyField()
+    user = serializers.ReadOnlyField(source="owner.username")
 
     class Meta:
         model = Transaction
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "debit_account",
+            "credit_account",
+            "description",
+            "amount",
+            "created_at",
+            "updated_at",
+        ]
 
     def create(self, validated_data):
         transaction = Transaction.objects.create(**validated_data)
-        payment_method = validated_data["payment_method"]
-        amount = validated_data["amount"]
 
-        if payment_method == Transaction.CASH:
-            cash_account = Account.objects.get(name="Efectivo")
-            income_account = Account.objects.get(name="Otros Ingresos")
-        elif payment_method == Transaction.BANK:
-            bank_account = Account.objects.get(name="Banco")
-            income_account = Account.objects.get(name="Otros Ingresos")
+        debit_account = validated_data["debit_account"]
+        credit_account = validated_data["credit_account"]
+
+        amount = validated_data["amount"]
 
         BookEntry.objects.create(
             transaction=transaction,
             amount=amount,
             balance_type=BookEntry.DEBIT,
-            account=(
-                bank_account if payment_method == Transaction.BANK else cash_account
-            ),
+            account=debit_account,
         )
 
         BookEntry.objects.create(
             transaction=transaction,
             amount=amount,
             balance_type=BookEntry.CREDIT,
-            account=income_account,
+            account=credit_account,
         )
 
         return transaction
 
 
 class BookEntrySerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+
     class Meta:
         model = BookEntry
-        fields = "__all__"
+        fields = ["id", "amount", "balance_type", "account", "transaction"]
 
 
 class AccountSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.ReadOnlyField(source="owner.username")
     id = serializers.ReadOnlyField()
-    # url = serializers.HyperlinkedIdentityField(
-    #     view_name="account-detail", lookup_field="id"
-    # )
 
     class Meta:
         model = Account
-        fields = "__all__"
+        fields = ["id", "name", "nature"]

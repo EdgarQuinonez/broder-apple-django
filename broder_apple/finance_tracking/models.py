@@ -2,21 +2,18 @@ from django.db import models
 
 
 class Transaction(models.Model):
-    INCOME = "income"
-    EXPENSE = "expense"
-    CASH = "cash"
-    BANK = "bank"
-
-    TYPE_CHOICES = [(INCOME, "Income"), (EXPENSE, "Expense")]
-    PAYMENT_METHOD_CHOICES = [(CASH, "Cash"), (BANK, "Bank")]
-
-    owner = models.ForeignKey(
+    user = models.ForeignKey(
         "auth.User", on_delete=models.CASCADE, related_name="transactions"
     )
-    description = models.CharField(max_length=100)
+
+    debit_account = models.ForeignKey(
+        "Account", on_delete=models.CASCADE, related_name="debits"
+    )
+    credit_account = models.ForeignKey(
+        "Account", on_delete=models.CASCADE, related_name="credits"
+    )
+    description = models.CharField(max_length=100, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_method = models.CharField(max_length=7, choices=PAYMENT_METHOD_CHOICES)
-    type = models.CharField(max_length=7, choices=TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -56,9 +53,6 @@ class Account(models.Model):
         (EXPENSE, "Expense"),
     ]
 
-    owner = models.ForeignKey(
-        "auth.User", on_delete=models.CASCADE, related_name="accounts"
-    )
     name = models.CharField(max_length=100)
     nature = models.CharField(max_length=9, choices=NATURE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -58,16 +58,55 @@ class TransactionViewSet(viewsets.ModelViewSet):
     )
     def income(self, request, *args, **kwargs):
         """
-        Create an income transaction.
+        Create an income transaction with double-entry accounting.
         """
-        serializer = TransactionSerializer(data=request.data)
+        # Extract and validate the payment method
+        payment_method = request.data.get("payment_method")
+        amount = request.data.get("amount")
+        if not amount:
+            return Response(
+                {"error": "Amount is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Map payment method to debit account (cash or bank)
+        try:
+            if payment_method == "cash":
+                debit_account = Account.objects.get(account_type="cash")
+            elif payment_method == "bank":
+                debit_account = Account.objects.get(account_type="bank")
+            else:
+                return Response(
+                    {"error": "Invalid payment method."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Define the "other income" credit account
+            credit_account = Account.objects.get(account_type="income")
+        except Account.DoesNotExist:
+            return Response(
+                {"error": "Specified account not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Create data for the serializer
+        transaction_data = {
+            "user": request.user.username,
+            "debit_account": debit_account.id,
+            "credit_account": credit_account.id,
+            "amount": amount,
+            "description": request.data.get("description", ""),
+        }
+
+        # Initialize the serializer with data
+        serializer = self.get_serializer(data=transaction_data)
         if serializer.is_valid():
-            serializer.save(owner=request.user, type=Transaction.INCOME)
+            # Save the transaction and create BookEntries
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        serializer.save(user=self.request.user)
 
 
 class AccountViewSet(viewsets.ModelViewSet):
