@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework.authtoken",
+    "auth",
 ]
 
 MIDDLEWARE = [
@@ -103,6 +104,10 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
@@ -147,3 +152,15 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Custom Constants
+## Predefined Accounts
+PREDEFINED_ACCOUNTS = [
+    {"id": 1, "name": "Efectivo", "nature": "asset"},
+    {"id": 2, "name": "Banco", "nature": "asset"},
+    {"id": 3, "name": "Otros ingresos", "nature": "revenue"},
+    {"id": 4, "name": "Gastos personales", "nature": "expense"},
+    {"id": 5, "name": "Compras", "nature": "asset"},
+    {"id": 6, "name": "Ingresos por ventas", "nature": "revenue"},
+    {"id": 7, "name": "Costo de ventas", "nature": "expense"},
+]

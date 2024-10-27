@@ -1,53 +1,7 @@
+from django.conf import settings
+from django.db import transaction
 from rest_framework import serializers
-from finance_tracking.models import Account, BookEntry, Transaction
-from django.contrib.auth.models import User
-
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    transactions = serializers.HyperlinkedRelatedField(
-        many=True, view_name="transaction-detail", read_only=True
-    )
-
-    class Meta:
-        model = User
-        fields = ["id", "username", "transactions"]
-
-
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True, required=True, style={"input_type": "password"}
-    )
-    password2 = serializers.CharField(
-        write_only=True,
-        required=True,
-        label="Confirm Password",
-        style={"input_type": "password"},
-    )
-
-    class Meta:
-        model = User
-        fields = ("username", "email", "password", "password2")
-        extra_kwargs = {
-            "email": {"required": True},
-        }
-
-    def validate(self, attrs):
-        if attrs["password"] != attrs["password2"]:
-            raise serializers.ValidationError(
-                {"password": "Password fields didn't match."}
-            )
-        return attrs
-
-    def create(self, validated_data):
-        # Remove password2 as it's not needed for user creation
-        validated_data.pop("password2")
-
-        user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            password=validated_data["password"],
-        )
-        return user
+from finance_tracking.models import Account, BookEntry, Transaction, UserAccountBalance
 
 
 class TransactionSerializer(serializers.HyperlinkedModelSerializer):
@@ -59,37 +13,81 @@ class TransactionSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             "id",
             "user",
-            "debit_account",
-            "credit_account",
+            "transaction_type",
             "description",
             "amount",
+            "payment_method",
             "created_at",
             "updated_at",
         ]
 
     def create(self, validated_data):
-        transaction = Transaction.objects.create(**validated_data)
+        with transaction.atomic():
+            transaction_instance = Transaction.objects.create(**validated_data)
 
-        debit_account = validated_data["debit_account"]
-        credit_account = validated_data["credit_account"]
+            payment_method = validated_data.get("payment_method")
+            amount = validated_data.get("amount")
+            user = transaction_instance.user
 
-        amount = validated_data["amount"]
+            try:
+                # Payment method accounts to credit or debit
+                if payment_method == "cash":
+                    payment_method_account = Account.objects.get(id=Account.CASH)
+                elif payment_method == "bank":
+                    payment_method_account = Account.objects.get(id=Account.BANK)
+                else:
+                    raise serializers.ValidationError(
+                        "Invalid payment method provided."
+                    )
 
-        BookEntry.objects.create(
-            transaction=transaction,
-            amount=amount,
-            balance_type=BookEntry.DEBIT,
-            account=debit_account,
-        )
+                # Transaction types
+                if transaction_instance.transaction_type == Transaction.INCOME:
+                    debit_account = payment_method_account
+                    credit_account = Account.objects.get(id=Account.OTHER_INCOME)
+                elif transaction_instance.transaction_type == Transaction.EXPENSE:
+                    debit_account = Account.objects.get(id=Account.PERSONAL_EXPENSES)
+                    credit_account = payment_method_account
+                elif transaction_instance.transaction_type == Transaction.PURCHASE:
+                    debit_account = Account.objects.get(id=Account.PURCHASES)
+                    credit_account = payment_method_account
+                elif transaction_instance.transaction_type == Transaction.SALE:
+                    debit_account = payment_method_account
+                    credit_account = Account.objects.get(id=Account.SALES_REVENUE)
+                else:
+                    raise serializers.ValidationError(
+                        "Invalid transaction type provided."
+                    )
 
-        BookEntry.objects.create(
-            transaction=transaction,
-            amount=amount,
-            balance_type=BookEntry.CREDIT,
-            account=credit_account,
-        )
+            except Account.DoesNotExist as e:
+                raise serializers.ValidationError(f"Account does not exist: {str(e)}")
 
-        return transaction
+            # Get or create UserAccountBalance for debit and credit accounts
+            debit_user_balance, _ = UserAccountBalance.objects.get_or_create(
+                user=user, account=debit_account
+            )
+            credit_user_balance, _ = UserAccountBalance.objects.get_or_create(
+                user=user, account=credit_account
+            )
+
+            # Create debit BookEntry
+            BookEntry.objects.create(
+                transaction=transaction_instance,
+                amount=amount,
+                balance_type=BookEntry.DEBIT,
+                account=debit_account,
+                user_account_balance=debit_user_balance,
+            )
+
+            # Create credit BookEntry
+            BookEntry.objects.create(
+                transaction=transaction_instance,
+                amount=amount,
+                balance_type=BookEntry.CREDIT,
+                account=credit_account,
+                user_account_balance=credit_user_balance,
+            )
+
+        return transaction_instance
 
 
 class BookEntrySerializer(serializers.HyperlinkedModelSerializer):
@@ -97,7 +95,14 @@ class BookEntrySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BookEntry
-        fields = ["id", "amount", "balance_type", "account", "transaction"]
+        fields = [
+            "id",
+            "amount",
+            "balance_type",
+            "account",
+            "transaction",
+            "user_account_balance",
+        ]
 
 
 class AccountSerializer(serializers.HyperlinkedModelSerializer):
