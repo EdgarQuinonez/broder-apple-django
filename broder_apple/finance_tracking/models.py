@@ -48,7 +48,7 @@ class UserAccountBalance(models.Model):
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, related_name="user_balances"
     )
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     class Meta:
         unique_together = ("user", "account")

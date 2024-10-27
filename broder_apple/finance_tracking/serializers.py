@@ -90,6 +90,16 @@ class TransactionSerializer(serializers.HyperlinkedModelSerializer):
         return transaction_instance
 
 
+class UserAccountBalanceSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.ReadOnlyField()
+    user = serializers.ReadOnlyField(source="user.username")
+    account = serializers.ReadOnlyField(source="account.name")
+
+    class Meta:
+        model = UserAccountBalance
+        fields = ["id", "user", "account", "balance"]
+
+
 class BookEntrySerializer(serializers.HyperlinkedModelSerializer):
     id = serializers.ReadOnlyField()
 

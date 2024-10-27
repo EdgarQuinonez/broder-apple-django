@@ -10,9 +10,11 @@ from rest_framework.authentication import TokenAuthentication, SessionAuthentica
 
 from .serializers import (
     AccountSerializer,
+    BookEntrySerializer,
     TransactionSerializer,
+    UserAccountBalanceSerializer,
 )
-from .models import Transaction, Account
+from .models import BookEntry, Transaction, Account, UserAccountBalance
 from django.contrib.auth.models import User
 
 from rest_framework.permissions import IsAuthenticated
@@ -24,6 +26,10 @@ def api_root(request, format=None):
         {
             "transactions": reverse("transaction-list", request=request, format=format),
             "accounts": reverse("account-list", request=request, format=format),
+            "user_accounts_balances": reverse(
+                "user-account-balance-list", request=request, format=format
+            ),
+            "book_entries": reverse("book-entry-list", request=request, format=format),
         }
     )
 
@@ -83,6 +89,26 @@ class TransactionViewSet(viewsets.ModelViewSet):
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class UserAccountBalanceViewSet(viewsets.ModelViewSet):
+    queryset = UserAccountBalance.objects.all()
+    serializer_class = UserAccountBalanceSerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class BookEntryViewSet(viewsets.ModelViewSet):
+    queryset = BookEntry.objects.all()
+    serializer_class = BookEntrySerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
