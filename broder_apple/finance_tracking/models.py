@@ -105,3 +105,75 @@ class BookEntry(models.Model):
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     balance_type = models.CharField(max_length=6, choices=BALANCE_CHOICES)
+
+class Product(models.Model):
+    MERCADO_LIBRE = "ml"
+    FACEBOOK_MARKETPLACE = "fb"
+    
+    PLATFORM_CHOICES = [
+        (MERCADO_LIBRE, "Mercado Libre"),
+        (FACEBOOK_MARKETPLACE, "Facebook Marketplace"),
+    ]
+    
+    # TODO: Change the mock up options to the actual dataset of smartphones
+    APPLE = "apple"
+    SAMSUNG = "samsung"
+    
+    BRAND_CHOICES = [
+        (APPLE, "Apple"),
+        (SAMSUNG, "Samsung"),
+    ]
+    
+    IPHONE_11 = "ip11"
+    IPHONE_12 = "ip12"
+    IPHONE_12_PRO = "ip12p"
+    IPHONE_12_PRO_MAX = "ip12pm"
+    IPHONE_13 = "ip13"
+    IPHONE_13_PRO = "ip13p"
+    IPHONE_13_PRO_MAX = "ip13pm"
+    IPHONE_14 = "ip14"
+    IPHONE_14_PRO = "ip14p"
+    IPHONE_14_PRO_MAX = "ip14pm"
+    GALAXY_S20 = "gs20"
+    
+    MODEL_CHOICES = [
+        (IPHONE_11, "iPhone 11"),
+        (IPHONE_12, "iPhone 12"),
+        (IPHONE_12_PRO, "iPhone 12 Pro"),
+        (IPHONE_12_PRO_MAX, "iPhone 12 Pro Max"),
+        (IPHONE_13, "iPhone 13"),
+        (IPHONE_13_PRO, "iPhone 13 Pro"),
+        (IPHONE_13_PRO_MAX, "iPhone 13 Pro Max"),
+        (IPHONE_14, "iPhone 14"),
+        (IPHONE_14_PRO, "iPhone 14 Pro"),
+        (IPHONE_14_PRO_MAX, "iPhone 14 Pro Max"),
+        (GALAXY_S20, "Galaxy S20"),
+    ]
+    
+    STORAGE_128GB = "128"
+    STORAGE_64GB = "64"
+    STORAGE_256GB = "256"
+    STORAGE_512GB = "512"
+    STORAGE_1TB = "1024"
+    
+    STORAGE_CHOICES = [
+        (STORAGE_64GB, "64GB"),
+        (STORAGE_128GB, "128GB"),
+        (STORAGE_256GB, "256GB"),
+        (STORAGE_512GB, "512GB"),
+        (STORAGE_1TB, "1TB"),
+    ]
+    
+    
+    title = models.CharField(max_length=180)
+    description = models.TextField()
+    platform = models.CharField(max_length=32, choices=PLATFORM_CHOICES)
+    brand = models.CharField(max_length=32, choices=BRAND_CHOICES)
+    model = models.CharField(max_length=32, choices=MODEL_CHOICES)
+    storage_capacity = models.CharField(max_length=32, choices=STORAGE_CHOICES)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]

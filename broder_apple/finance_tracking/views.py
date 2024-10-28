@@ -82,8 +82,86 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[IsAuthenticated],
+        url_path="expense",
+    )
+    def expense(self, request, *args, **kwargs):
+        """
+        Create an expense transaction with double-entry accounting.
+        """
+        transaction_type = Transaction.EXPENSE
+        amount = request.data.get("amount")
+        description = request.data.get("description", "")
+        payment_method = request.data.get("payment_method")
+
+        if not amount:
+            return Response(
+                {"error": "Amount is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        elif not payment_method:
+            return Response(
+                {"error": "Payment method is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif payment_method not in ["cash", "bank"]:
+            return Response(
+                {"error": "Invalid payment method."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        transaction_data = {
+            "transaction_type": transaction_type,
+            "amount": amount,
+            "description": description,
+            "payment_method": payment_method,
+        }
+
+        serializer = TransactionSerializer(data=transaction_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def purchase(self, request, *args, **kwargs):
+        """
+        Create a purchase transaction with double-entry accounting.
+        """
+        transaction_type = Transaction.PURCHASE
+        amount = request.data.get("amount")
+        description = request.data.get("description", "")
+        payment_method = request.data.get("payment_method")
+
+        if not amount:
+            return Response(
+                {"error": "Amount is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        elif not payment_method:
+            return Response(
+                {"error": "Payment method is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif payment_method not in ["cash", "bank"]:
+            return Response(
+                {"error": "Invalid payment method."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        transaction_data = {
+            "transaction_type": transaction_type,
+            "amount": amount,
+            "description": description,
+            "payment_method": payment_method,
+        }
+
+        serializer = TransactionSerializer(data=transaction_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AccountViewSet(viewsets.ModelViewSet):
