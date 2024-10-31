@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
-from broder_apple.inventory_management.models import Log, Product
+from inventory_management.models import Log
 
 
 from .serializers import (
@@ -20,20 +20,6 @@ from .models import BookEntry, Transaction, Account, UserAccountBalance
 from django.contrib.auth.models import User
 
 from rest_framework.permissions import IsAuthenticated
-
-
-@api_view(["GET"])
-def api_root(request, format=None):
-    return Response(
-        {
-            "transactions": reverse("transaction-list", request=request, format=format),
-            "accounts": reverse("account-list", request=request, format=format),
-            "user_accounts_balances": reverse(
-                "user-account-balance-list", request=request, format=format
-            ),
-            "book_entries": reverse("book-entry-list", request=request, format=format),
-        }
-    )
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -78,7 +64,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     {"error": "Amount is required."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            transaction_data["amount"] = amount  # Set amount directly from request
+            transaction_data["amount"] = amount
 
         # Validate payment_method for all transaction types
         if not payment_method:

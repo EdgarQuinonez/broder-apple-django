@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 # Create your models here.
@@ -110,7 +111,9 @@ class Product(models.Model):
     model = models.CharField(max_length=32, choices=MODEL_CHOICES)
     storage_capacity = models.CharField(max_length=32, choices=STORAGE_CHOICES)
     carrier = models.CharField(max_length=32, choices=CARRIER_CHOICES)
-    battery_health = models.IntegerField(max=100)
+    battery_health = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
     screen = models.CharField(max_length=32, choices=SCREEN_CHOICES)
     sidesAndBack = models.CharField(max_length=32, choices=SIDES_AND_BACK_CHOICES)
     fullyFunctional = models.BooleanField()
@@ -135,7 +138,7 @@ class Log(models.Model):
     )
     listed_price = models.DecimalField(max_digits=12, decimal_places=2)
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2)
-    platform = models.CharField(max_length=32, choices=Product.PLATFORM_CHOICES)
+    platform = models.CharField(max_length=32, choices=PLATFORM_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -149,7 +152,7 @@ class Inventory(models.Model):
     )
     listed_price = models.DecimalField(max_digits=12, decimal_places=2)
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2)
-    platform = models.CharField(max_length=32, choices=Product.PLATFORM_CHOICES)
+    platform = models.CharField(max_length=32, choices=Log.PLATFORM_CHOICES)
     buyout_price = models.DecimalField(max_digits=12, decimal_places=2)
     estimated_sale_price = models.DecimalField(max_digits=12, decimal_places=2)
     seller = models.CharField(max_length=180)
@@ -166,7 +169,7 @@ class Sale(models.Model):
     )
     listed_price = models.DecimalField(max_digits=12, decimal_places=2)
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2)
-    platform = models.CharField(max_length=32, choices=Product.PLATFORM_CHOICES)
+    platform = models.CharField(max_length=32, choices=Log.PLATFORM_CHOICES)
     buyout_price = models.DecimalField(max_digits=12, decimal_places=2)
     estimated_sale_price = models.DecimalField(max_digits=12, decimal_places=2)
     seller = models.CharField(max_length=180)
