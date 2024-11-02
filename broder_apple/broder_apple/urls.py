@@ -17,17 +17,12 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
-router = DefaultRouter()
-
-router.register(r"finance", include("finance_tracking.urls"))
-router.register(r"inventory", include("inventory_management.urls"))
-router.register(r"auth", include("auth.urls"))
 
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("finance/", include("finance_tracking.urls")),
+    path("inventory/", include("inventory_management.urls")),
+    path("auth/", include("auth.urls")),
     path("admin/", admin.site.urls),
     path("api-auth/", include("rest_framework.urls")),
 ]
