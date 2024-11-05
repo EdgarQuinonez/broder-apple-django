@@ -2,6 +2,59 @@ from rest_framework import serializers
 from .models import Product, Log, Inventory, Sale
 
 
+from rest_framework import serializers
+from .models import Brand, Storage, ProductModel, Condition, Carrier
+
+
+class BrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Brand
+        fields = ["id", "name"]
+
+
+class StorageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Storage
+        fields = ["id", "capacity"]
+
+
+class ProductModelSerializer(serializers.ModelSerializer):
+    brand = BrandSerializer(read_only=True)
+    brand_id = serializers.PrimaryKeyRelatedField(
+        queryset=Brand.objects.all(), source="brand", write_only=True
+    )
+    storage_options = StorageSerializer(many=True, read_only=True)
+    storage_options_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Storage.objects.all(),
+        source="storage_options",
+        many=True,
+        write_only=True,
+    )
+
+    class Meta:
+        model = ProductModel
+        fields = [
+            "id",
+            "name",
+            "brand",
+            "brand_id",
+            "storage_options",
+            "storage_options_ids",
+        ]
+
+
+class ConditionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Condition
+        fields = ["id", "category", "condition", "description"]
+
+
+class CarrierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Carrier
+        fields = ["id", "name"]
+
+
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
@@ -9,7 +62,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
-            "brand",
             "model",
             "storage_capacity",
             "carrier",

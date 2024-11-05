@@ -12,6 +12,61 @@ from .serializers import (
 from rest_framework.permissions import IsAuthenticated
 
 
+from rest_framework import viewsets
+from .models import Brand, Storage, ProductModel, Condition, Carrier
+from .serializers import (
+    BrandSerializer,
+    StorageSerializer,
+    ProductModelSerializer,
+    ConditionSerializer,
+    CarrierSerializer,
+)
+
+
+class BrandViewSet(viewsets.ModelViewSet):
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+    lookup_field = "id"
+
+
+class StorageViewSet(viewsets.ModelViewSet):
+    queryset = Storage.objects.all()
+    serializer_class = StorageSerializer
+    lookup_field = "id"
+
+
+class ProductModelViewSet(viewsets.ModelViewSet):
+    queryset = ProductModel.objects.all()
+    serializer_class = ProductModelSerializer
+    lookup_field = "id"
+
+    # Optional filtering based on brand
+    def get_queryset(self):
+        brand_id = self.request.query_params.get("brand_id")
+        if brand_id:
+            return self.queryset.filter(brand_id=brand_id)
+        return self.queryset
+
+
+class ConditionViewSet(viewsets.ModelViewSet):
+    queryset = Condition.objects.all()
+    serializer_class = ConditionSerializer
+    lookup_field = "id"
+
+    # Optional filtering based on category
+    def get_queryset(self):
+        category = self.request.query_params.get("category")
+        if category:
+            return self.queryset.filter(category=category)
+        return self.queryset
+
+
+class CarrierViewSet(viewsets.ModelViewSet):
+    queryset = Carrier.objects.all()
+    serializer_class = CarrierSerializer
+    lookup_field = "id"
+
+
 class ProductViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing Product instances.
