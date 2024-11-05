@@ -100,7 +100,7 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        limit_choices_to={"category": "Screen"},
+        limit_choices_to={"category": "Pantalla"},
         related_name="screen_products",
     )
     sides_and_back_condition = models.ForeignKey(
@@ -108,7 +108,7 @@ class Product(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        limit_choices_to={"category": "SidesAndBack"},
+        limit_choices_to={"category": "Lados y tapa"},
         related_name="sides_back_products",
     )
     fullyFunctional = models.BooleanField(null=True, blank=True, default=True)
