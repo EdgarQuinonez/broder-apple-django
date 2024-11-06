@@ -104,6 +104,7 @@ class InventorySerializer(serializers.ModelSerializer):
             "platform",
             "buyout_price",
             "estimated_sale_price",
+            "is_listed",
             "seller",
             "created_at",
             "updated_at",

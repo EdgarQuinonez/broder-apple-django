@@ -153,6 +153,7 @@ class Inventory(models.Model):
     platform = models.CharField(max_length=32, choices=Log.PLATFORM_CHOICES)
     buyout_price = models.DecimalField(max_digits=12, decimal_places=2)
     estimated_sale_price = models.DecimalField(max_digits=12, decimal_places=2)
+    is_listed = models.BooleanField(default=False)
     seller = models.CharField(max_length=180)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
