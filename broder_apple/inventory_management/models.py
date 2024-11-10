@@ -66,8 +66,25 @@ class Product(models.Model):
     Main product model with dynamic fields for brand, model, storage, and condition.
     """
 
+    LIFECYCLE_LOG = "log"
+    LIFECYCLE_INVENTORY = "inventory"
+    LIFECYCLE_SALE = "sale"
+    LIFECYCLE_CHOICES = [
+        (LIFECYCLE_LOG, "Log"),
+        (LIFECYCLE_INVENTORY, "Inventory"),
+        (LIFECYCLE_SALE, "Sale"),
+    ]
+
+    lifecycle_stage = models.CharField(
+        max_length=20,
+        choices=LIFECYCLE_CHOICES,
+        default=LIFECYCLE_LOG,
+    )
+
+
     title = models.CharField(max_length=180)
     description = models.TextField()
+    
     model = models.ForeignKey(
         ProductModel,
         on_delete=models.CASCADE,
@@ -121,6 +138,44 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+    
+     # Transition Methods
+
+    def move_to_inventory(self, buyout_price, estimated_sale_price, seller):
+        if self.lifecycle_stage != self.LIFECYCLE_LOG:
+            raise ValueError("Product must be in Log to move to Inventory.")
+        
+        Inventory.objects.create(
+            product=self,
+            listed_price=self.log.listed_price,
+            shipping_cost=self.log.shipping_cost,
+            platform=self.log.platform,
+            buyout_price=buyout_price,
+            estimated_sale_price=estimated_sale_price,
+            seller=seller,
+        )
+        self.log.delete()
+        self.lifecycle_stage = self.LIFECYCLE_INVENTORY
+        self.save()
+
+    def move_to_sale(self, sale_price, buyer=""):
+        if self.lifecycle_stage != self.LIFECYCLE_INVENTORY:
+            raise ValueError("Product must be in Inventory to move to Sale.")
+        
+        Sale.objects.create(
+            product=self,
+            listed_price=self.inventory.listed_price,
+            shipping_cost=self.inventory.shipping_cost,
+            platform=self.inventory.platform,
+            buyout_price=self.inventory.buyout_price,
+            estimated_sale_price=self.inventory.estimated_sale_price,
+            seller=self.inventory.seller,
+            sale_price=sale_price,
+            buyer=buyer,
+        )
+        self.inventory.delete()
+        self.lifecycle_stage = self.LIFECYCLE_SALE
+        self.save()
 
 
 class Log(models.Model):
@@ -173,7 +228,7 @@ class Sale(models.Model):
     estimated_sale_price = models.DecimalField(max_digits=12, decimal_places=2)
     seller = models.CharField(max_length=180)
     sale_price = models.DecimalField(max_digits=12, decimal_places=2)
-    buyer = models.CharField(max_length=180)
+    buyer = models.CharField(max_length=180, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

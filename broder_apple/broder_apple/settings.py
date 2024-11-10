@@ -11,10 +11,15 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 import os
+import environ
 from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Initialize environment variables
+env = environ.Env()
+environ.Env.read_env()  # reads from a .env file if it exists
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -82,11 +87,11 @@ WSGI_APPLICATION = "broder_apple.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-POSTGRES_DB_NAME = os.getenv("POSTGRES_DB_NAME")
-POSTGRES_DB_USER = os.getenv("POSTGRES_DB_USER")
-POSTGRES_DB_PASSWORD = os.getenv("POSTGRES_DB_PASSWORD")
-POSTGRES_DB_HOST = os.getenv("POSTGRES_DB_HOST")
-POSTGRES_DB_PORT = os.getenv("POSTGRES_DB_PORT")
+POSTGRES_DB_NAME = env("POSTGRES_DB_NAME")
+POSTGRES_DB_USER = env("POSTGRES_DB_USER")
+POSTGRES_DB_PASSWORD = env("POSTGRES_DB_PASSWORD")
+POSTGRES_DB_HOST = env("POSTGRES_DB_HOST")
+POSTGRES_DB_PORT = env("POSTGRES_DB_PORT")
 
 DATABASES = {
     "default": {

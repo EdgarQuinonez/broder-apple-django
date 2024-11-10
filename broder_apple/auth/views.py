@@ -33,6 +33,7 @@ class UserLoginAPIView(APIView):
             if User.objects.filter(username=request.data["username"]).exists():
                 user = User.objects.get(username=request.data["username"])
                 token, created = Token.objects.get_or_create(user=user)
+                print(token)
                 response = {
                     "success": True,
                     "username": user.username,

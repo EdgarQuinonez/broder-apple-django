@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
-from inventory_management.models import Log
+from inventory_management.models import Inventory, Log
 
 
 from .serializers import (
@@ -37,12 +37,12 @@ class TransactionViewSet(viewsets.ModelViewSet):
             "payment_method": payment_method,
         }
 
+        # Handle purchase transaction
         if transaction_type == Transaction.PURCHASE:
-
             product_log_id = request.data.get("productLogID")
             if not product_log_id:
                 return Response(
-                    {"error": "Product ID is required for purchase transactions."},
+                    {"error": "Product Log ID is required for purchase transactions."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             try:
@@ -56,8 +56,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     {"error": "Invalid Product ID."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-        else:
 
+        # Handle sale transaction
+        elif transaction_type == Transaction.SALE:
+            inventory_id = request.data.get("inventoryID")
+            if not inventory_id:
+                return Response(
+                    {"error": "Inventory ID is required for sale transactions."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                inventory = Inventory.objects.get(id=inventory_id)
+                transaction_data["amount"] = request.data.get("sale_price")
+                transaction_data["description"] = (
+                    f"Venta de {inventory.product.title}"
+                )
+            except Inventory.DoesNotExist:
+                return Response(
+                    {"error": "Invalid Inventory ID."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        else:
+            # For other transactions, retrieve the amount
             amount = request.data.get("amount")
             if not amount:
                 return Response(
@@ -78,11 +99,27 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Create the transaction
         serializer = self.get_serializer(data=transaction_data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            transaction_instance = serializer.save(user=request.user)
+            
+            # Transition product lifecycle if applicable
+            if transaction_type == Transaction.PURCHASE:
+                product_log.product.move_to_inventory(
+                    buyout_price=request.data.get("buyout_price"),
+                    estimated_sale_price=request.data.get("estimated_sale_price"),
+                    seller=request.data.get("seller")
+                )
+            elif transaction_type == Transaction.SALE:
+                inventory.product.move_to_sale(
+                    sale_price=request.data.get("sale_price"),
+                    buyer=request.data.get("buyer"),
+                )
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
     @action(
         detail=False,
@@ -112,8 +149,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
     )
     def purchase(self, request, *args, **kwargs):
         """Create a purchase transaction with double-entry accounting."""
+        
         return self._create_transaction(request, Transaction.PURCHASE)
 
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[permissions.IsAuthenticated],
+        url_path="sale",
+    )
+    def sale(self, request, *args, **kwargs):
+        """Create a sale transaction with double-entry accounting."""
+        
+        return self._create_transaction(request, Transaction.SALE)
+    
 
 class AccountViewSet(viewsets.ModelViewSet):
     queryset = Account.objects.all()

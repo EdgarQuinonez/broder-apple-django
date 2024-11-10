@@ -30,62 +30,67 @@ class TransactionSerializer(serializers.HyperlinkedModelSerializer):
             user = transaction_instance.user
 
             try:
-                # Payment method accounts to credit or debit
+                # Determine payment method account (cash or bank)
                 if payment_method == "cash":
                     payment_method_account = Account.objects.get(id=Account.CASH)
                 elif payment_method == "bank":
                     payment_method_account = Account.objects.get(id=Account.BANK)
                 else:
-                    raise serializers.ValidationError(
-                        "Invalid payment method provided."
-                    )
+                    raise serializers.ValidationError("Invalid payment method provided.")
 
-                # Transaction types
+                # Handle different transaction types
                 if transaction_instance.transaction_type == Transaction.INCOME:
                     debit_account = payment_method_account
                     credit_account = Account.objects.get(id=Account.OTHER_INCOME)
+                    entries = [
+                        {"account": debit_account, "balance_type": BookEntry.DEBIT},
+                        {"account": credit_account, "balance_type": BookEntry.CREDIT},
+                    ]
                 elif transaction_instance.transaction_type == Transaction.EXPENSE:
                     debit_account = Account.objects.get(id=Account.PERSONAL_EXPENSES)
                     credit_account = payment_method_account
+                    entries = [
+                        {"account": debit_account, "balance_type": BookEntry.DEBIT},
+                        {"account": credit_account, "balance_type": BookEntry.CREDIT},
+                    ]
                 elif transaction_instance.transaction_type == Transaction.PURCHASE:
                     debit_account = Account.objects.get(id=Account.PURCHASES)
                     credit_account = payment_method_account
+                    entries = [
+                        {"account": debit_account, "balance_type": BookEntry.DEBIT},
+                        {"account": credit_account, "balance_type": BookEntry.CREDIT},
+                    ]
                 elif transaction_instance.transaction_type == Transaction.SALE:
-                    debit_account = payment_method_account
-                    credit_account = Account.objects.get(id=Account.SALES_REVENUE)
+                    sales_revenue_account = Account.objects.get(id=Account.SALES_REVENUE)
+                    sales_cost_account = Account.objects.get(id=Account.SALES_COST)
+                    inventory_account = Account.objects.get(id=Account.PURCHASES)
+                    entries = [
+                        {"account": payment_method_account, "balance_type": BookEntry.DEBIT},
+                        {"account": sales_revenue_account, "balance_type": BookEntry.CREDIT},
+                        {"account": sales_cost_account, "balance_type": BookEntry.DEBIT},
+                        {"account": inventory_account, "balance_type": BookEntry.CREDIT},
+                    ]
                 else:
-                    raise serializers.ValidationError(
-                        "Invalid transaction type provided."
-                    )
+                    raise serializers.ValidationError("Invalid transaction type provided.")
 
             except Account.DoesNotExist as e:
                 raise serializers.ValidationError(f"Account does not exist: {str(e)}")
 
-            # Get or create UserAccountBalance for debit and credit accounts
-            debit_user_balance, _ = UserAccountBalance.objects.get_or_create(
-                user=user, account=debit_account
-            )
-            credit_user_balance, _ = UserAccountBalance.objects.get_or_create(
-                user=user, account=credit_account
-            )
-
-            # Create debit BookEntry
-            BookEntry.objects.create(
-                transaction=transaction_instance,
-                amount=amount,
-                balance_type=BookEntry.DEBIT,
-                account=debit_account,
-                user_account_balance=debit_user_balance,
-            )
-
-            # Create credit BookEntry
-            BookEntry.objects.create(
-                transaction=transaction_instance,
-                amount=amount,
-                balance_type=BookEntry.CREDIT,
-                account=credit_account,
-                user_account_balance=credit_user_balance,
-            )
+            # Iterate over entries to create BookEntries for each account
+            for entry in entries:
+                account = entry["account"]
+                balance_type = entry["balance_type"]
+                user_balance, _ = UserAccountBalance.objects.get_or_create(
+                    user=user, account=account
+                )
+                
+                BookEntry.objects.create(
+                    transaction=transaction_instance,
+                    amount=amount,
+                    balance_type=balance_type,
+                    account=account,
+                    user_account_balance=user_balance,
+                )
 
         return transaction_instance
 
